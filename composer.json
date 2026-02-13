@@ -1,0 +1,17 @@
+{
+    "name": "robotateme/business-hours",
+    "autoload": {
+        "psr-4": {
+            "BusinessHours\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "robotateme",
+            "email": "jarwork884@gmail.com"
+        }
+    ],
+    "require": {
+        "symfony/var-dumper": "^8.0"
+    }
+}
