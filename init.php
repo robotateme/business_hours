@@ -1,11 +1,13 @@
 <?php
 require "vendor/autoload.php";
 
-use BusinessHours\Manager;
-use BusinessHours\Utils\ScheduleFactory;
-
-// Intl.DateTimeFormat().resolvedOptions().timeZone
-// В Форме, при выборе "круглосуточно" сделать сброс полей на 00:00 и disable, display:none.
+use BusinessHours\Application\Query\GetPointStatusHandler;
+use BusinessHours\Application\Query\GetPointStatusQuery;
+use BusinessHours\Domain\Entity\DaySchedule;
+use BusinessHours\Domain\Schedule;
+use BusinessHours\Domain\ScheduleChecker;
+use BusinessHours\Domain\Values\BreakPeriod;
+use BusinessHours\Domain\Values\TimeRange;
 
 $stripClub = [
     'Mon' => ['begin' => '20:00', 'end' => '08:00', 'breaks' => []],
@@ -71,10 +73,44 @@ $petShop = [
     ]]
 ];
 
-$now = new DateTimeImmutable(timezone: new DateTimeZone('Europe/Moscow'));
-$schedule = ScheduleFactory::make($petShop);
-$manager = new Manager($schedule);
-dd($manager->describeCurrentStatus($now)->operationStatus);
+/**
+ * @throws DateMalformedStringException
+ */
+$buildSchedule = static function (array $data): Schedule
+{
+    $days = [];
 
+    foreach ($data as $day => $info) {
+        $working = new TimeRange(
+            new DateTimeImmutable($info['begin']),
+            new DateTimeImmutable($info['end'])
+        );
 
+        $breaks = [];
+
+        foreach ($info['breaks'] as $b) {
+            $breaks[] = new BreakPeriod(
+                new TimeRange(
+                    new DateTimeImmutable($b['begin']),
+                    new DateTimeImmutable($b['end'])
+                ),
+                $b['reason']
+            );
+        }
+
+        $days[$day] = new DaySchedule($working, $breaks);
+    }
+
+    return new Schedule($days);
+};
+
+$schedule = $buildSchedule($petShop);
+$handler = new GetPointStatusHandler(new ScheduleChecker());
+
+$status = $handler->handle(new GetPointStatusQuery(
+    $schedule,
+    new DateTimeImmutable('now')
+));
+
+dd($status->type);
 
