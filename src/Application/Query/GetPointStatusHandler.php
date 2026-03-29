@@ -2,17 +2,18 @@
 
 namespace BusinessHours\Application\Query;
 
-use BusinessHours\Domain\ScheduleChecker;
-use BusinessHours\Domain\Values\Status;
+use BusinessHours\Application\DTO\Status;
+use BusinessHours\Domain\ValueObject\SecondOfDay;
 
-final readonly class GetPointStatusHandler
+final class GetPointStatusHandler
 {
-    public function __construct(
-        private ScheduleChecker $checker
-    ) {}
-
-    public function handle(GetPointStatusQuery $query): Status
+    public function handle(GetPointStatusQuery $q): Status
     {
-        return $this->checker->check($query->schedule, $query->time);
+        $seconds = ((int)$q->time->format('H') * 3600)
+            + ((int)$q->time->format('i') * 60);
+
+        $time = SecondOfDay::fromInt($seconds);
+
+        return $q->schedule->getStatus($q->day, $time);
     }
 }

@@ -1,13 +1,10 @@
 <?php
-require "vendor/autoload.php";
 
 use BusinessHours\Application\Query\GetPointStatusHandler;
 use BusinessHours\Application\Query\GetPointStatusQuery;
-use BusinessHours\Domain\Entity\DaySchedule;
-use BusinessHours\Domain\Schedule;
-use BusinessHours\Domain\ScheduleChecker;
-use BusinessHours\Domain\Values\BreakPeriod;
-use BusinessHours\Domain\Values\TimeRange;
+use BusinessHours\Tests\Factory;
+
+require "vendor/autoload.php";
 
 $stripClub = [
     'Mon' => ['begin' => '20:00', 'end' => '08:00', 'breaks' => []],
@@ -38,7 +35,7 @@ $gasStation = [
         ['begin' => '01:00', 'end' => '03:00', 'reason' => 'Refill'],
     ]],
     'Sat' => ['begin' => '00:00', 'end' => '00:00', 'breaks' => [
-        ['begin' => '23:00', 'end' => '05:00', 'reason' => 'Maintenance'],
+        ['begin' => '23:00', 'end' => '01:00', 'reason' => 'Maintenance'],
         ['begin' => '08:00', 'end' => '08:30', 'reason' => 'Shift change'],
     ]],
     'Sun' => ['begin' => '00:00', 'end' => '00:00', 'breaks' => [
@@ -73,44 +70,14 @@ $petShop = [
     ]]
 ];
 
-/**
- * @throws DateMalformedStringException
- */
-$buildSchedule = static function (array $data): Schedule
-{
-    $days = [];
+$handler = new GetPointStatusHandler()->handle(
+    new GetPointStatusQuery(
+        Factory::gasStation(),
+        'Mon',
+        new DateTimeImmutable('now')
+    )
+);
 
-    foreach ($data as $day => $info) {
-        $working = new TimeRange(
-            new DateTimeImmutable($info['begin']),
-            new DateTimeImmutable($info['end'])
-        );
 
-        $breaks = [];
-
-        foreach ($info['breaks'] as $b) {
-            $breaks[] = new BreakPeriod(
-                new TimeRange(
-                    new DateTimeImmutable($b['begin']),
-                    new DateTimeImmutable($b['end'])
-                ),
-                $b['reason']
-            );
-        }
-
-        $days[$day] = new DaySchedule($working, $breaks);
-    }
-
-    return new Schedule($days);
-};
-
-$schedule = $buildSchedule($petShop);
-$handler = new GetPointStatusHandler(new ScheduleChecker());
-
-$status = $handler->handle(new GetPointStatusQuery(
-    $schedule,
-    new DateTimeImmutable('now')
-));
-
-dd($status->type);
+dd($handler, new DateTimeImmutable('now'));
 

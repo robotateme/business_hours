@@ -5,6 +5,11 @@
             "BusinessHours\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "BusinessHours\\Tests\\": "tests/"
+        }
+    },
     "authors": [
         {
             "name": "robotateme",
@@ -13,5 +18,8 @@
     ],
     "require": {
         "symfony/var-dumper": "^8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^13.0"
     }
 }
