@@ -15,24 +15,27 @@ final readonly class TimeRange
         $s = $this->start->value();
         $e = $this->end->value();
 
+        //24/7
         if ($s === $e) {
-            return true; // 24h
+            return true;
         }
 
+        // обычный диапазон
         if ($s < $e) {
             return $t >= $s && $t < $e;
         }
 
+        //через полночь
         return $t >= $s || $t < $e;
-    }
-
-    public function start(): int
-    {
-        return $this->start->value();
     }
 
     public function end(): int
     {
         return $this->end->value();
+    }
+
+    public function start(): int
+    {
+        return $this->start->value();
     }
 }

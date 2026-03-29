@@ -11,6 +11,7 @@ use BusinessHours\Domain\ValueObject\SecondOfDay;
 use BusinessHours\Domain\ValueObject\TimeRange;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Schedule::class)]
@@ -213,6 +214,116 @@ final class ScheduleTest extends TestCase
 
         $this->assertEquals(StatusType::OPEN, $status->type);
         $this->assertEquals(30, $status->secondsToBreak);
+    }
+
+    public function test_open_boundary(): void
+    {
+        $schedule = Factory::petShop();
+
+        // 07:59:59
+        $this->assertSame(
+            StatusType::CLOSED,
+            $schedule->getStatus('Mon', SecondOfDay::fromInt(7*3600 + 59*60 + 59))->type
+        );
+
+        // 08:00:00
+        $this->assertSame(
+            StatusType::OPEN,
+            $schedule->getStatus('Mon', SecondOfDay::fromString('08:00'))->type
+        );
+
+        // 08:00:01
+        $this->assertSame(
+            StatusType::OPEN,
+            $schedule->getStatus('Mon', SecondOfDay::fromInt(8*3600 + 1))->type
+        );
+    }
+
+    public function test_break_boundary(): void
+    {
+        $schedule = Factory::petShop();
+
+        // 11:59:59
+        $this->assertSame(
+            StatusType::OPEN,
+            $schedule->getStatus('Mon', SecondOfDay::fromInt(11*3600 + 59*60 + 59))->type
+        );
+
+        // 12:00
+        $this->assertSame(
+            StatusType::ON_BREAK,
+            $schedule->getStatus('Mon', SecondOfDay::fromString('12:00'))->type
+        );
+
+        // 13:00
+        $this->assertSame(
+            StatusType::OPEN,
+            $schedule->getStatus('Mon', SecondOfDay::fromString('13:00'))->type
+        );
+    }
+
+    public function test_midnight_transition(): void
+    {
+        $schedule = Factory::gasStation();
+
+        // 23:59:59
+        $this->assertSame(
+            StatusType::OPEN,
+            $schedule->getStatus('Mon', SecondOfDay::fromInt(86399))->type
+        );
+
+        // 00:00:00
+        $this->assertSame(
+            StatusType::OPEN,
+            $schedule->getStatus('Tue', SecondOfDay::fromInt(0))->type
+        );
+    }
+
+    public function test_cross_midnight_break(): void
+    {
+        $schedule = Factory::gasStation();
+
+        // 23:30
+        $this->assertSame(
+            StatusType::CLOSED,
+            $schedule->getStatus('Sat', SecondOfDay::fromString('23:30'))->type
+        );
+
+        // 04:59
+        $this->assertSame(
+            StatusType::ON_BREAK,
+            $schedule->getStatus('Sun', SecondOfDay::fromString('04:59'))->type
+        );
+
+        // 05:00
+        $this->assertSame(
+            StatusType::OPEN,
+            $schedule->getStatus('Sun', SecondOfDay::fromString('05:00'))->type
+        );
+    }
+
+    public static function boundaryProvider(): array
+    {
+        return [
+            ['07:59', StatusType::CLOSED],
+            ['08:00', StatusType::OPEN],
+            ['11:59', StatusType::OPEN],
+            ['12:00', StatusType::ON_BREAK],
+        ];
+    }
+
+
+    #[DataProvider('boundaryProvider')]
+    public function test_boundaries(string $time, StatusType $expected): void
+    {
+        $schedule = Factory::petShop();
+
+        $status = $schedule->getStatus(
+            'Mon',
+            SecondOfDay::fromString($time)
+        );
+
+        $this->assertSame($expected, $status->type);
     }
 
 }

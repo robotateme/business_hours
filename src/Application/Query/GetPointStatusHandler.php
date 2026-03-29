@@ -11,7 +11,8 @@ final class GetPointStatusHandler
     {
         $seconds = ((int)$q->time->format('H') * 3600)
             + ((int)$q->time->format('i') * 60)
-            + ((int)$q->time->format('s'));
+            + ((int)$q->time->format('s'))
+        ;
 
         $time = SecondOfDay::fromInt($seconds);
 

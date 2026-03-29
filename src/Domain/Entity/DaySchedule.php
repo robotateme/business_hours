@@ -14,73 +14,72 @@ final readonly class DaySchedule
 
     public function __construct(
         private TimeRange $workingHours,
-        array $breaks = []
-    ) {
+        array             $breaks = []
+    )
+    {
         $this->breaks = $breaks;
     }
 
     public function resolve(SecondOfDay $time): Status
     {
-        $now = $time->value();
+        $t = $time->value();
 
-        // закрыто
-        if (!$this->workingHours->contains($time)) {
-            return Status::closed(
-                $this->secondsToWorkingStart($now)
-            );
-        }
-
-        // перерыв
+        // 1. BREAK имеет приоритет
         foreach ($this->breaks as $break) {
-            if ($break->isNow($time)) {
+            if ($break->range->contains($time)) {
                 return Status::onBreak(
                     $break->reason,
-                    $this->diff($now, $break->end())
+                    $this->secondsDiff($t, $break->range->end())
                 );
             }
         }
 
-        // открыто
-        return Status::open(
-            $this->diff($now, $this->workingHoursEnd()),
-            $this->nextBreakStart($now)
-        );
+        // 2. OPEN
+        if ($this->workingHours->contains($time)) {
+            $toClose = $this->secondsDiff($t, $this->workingHours->end());
+            $nextBreak = $this->nextBreakAfter($t);
+            return Status::open($toClose, $nextBreak);
+        }
+
+        // 3. CLOSED → считаем когда откроется
+        $nextOpen = $this->secondsUntilOpen($t);
+
+        return Status::closed($nextOpen);
     }
 
-    private function workingHoursStart(): int
+    private function nextBreakAfter(int $t): ?int
     {
-        return $this->workingHours->start();
+        $future = [];
+
+        foreach ($this->breaks as $break) {
+            $start = $break->range->start();
+
+            if ($start >= $t) {
+                $future[] = $start;
+            }
+        }
+
+        if ($future === []) {
+            return null;
+        }
+
+        return $this->secondsDiff($t, min($future));
     }
 
-    private function workingHoursEnd(): int
+    private function secondsUntilOpen(int $t): int
     {
-        return $this->workingHours->end();
+        $start = $this->workingHours->start();
+
+        return $this->secondsDiff($t, $start);
     }
 
-    private function secondsToWorkingStart(int $now): int
-    {
-        return $this->diff($now, $this->workingHoursStart());
-    }
-
-    private function diff(int $now, int $target): int
+    private function secondsDiff(int $now, int $target): int
     {
         if ($target >= $now) {
             return $target - $now;
         }
 
-        return (86400 - $now) + $target;
+        return 86400 - $now + $target;
     }
 
-    private function nextBreakStart(int $now): ?int
-    {
-        $starts = array_map(static fn($b) => $b->start(), $this->breaks);
-
-        $future = array_filter($starts, static fn($s) => $s > $now);
-
-        if (!$future) {
-            return null;
-        }
-
-        return min($future) - $now;
-    }
 }

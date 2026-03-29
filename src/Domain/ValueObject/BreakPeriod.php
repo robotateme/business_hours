@@ -9,11 +9,6 @@ final class BreakPeriod
         public string $reason
     ) {}
 
-    public function isNow(SecondOfDay $time): bool
-    {
-        return $this->range->contains($time);
-    }
-
     public function start(): int
     {
         return $this->range->start();
@@ -23,4 +18,5 @@ final class BreakPeriod
     {
         return $this->range->end();
     }
+
 }
