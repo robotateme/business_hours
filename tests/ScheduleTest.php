@@ -326,4 +326,42 @@ final class ScheduleTest extends TestCase
         $this->assertSame($expected, $status->type);
     }
 
+    public function test_break_end_boundary(): void
+    {
+        $schedule = Factory::petShop();
+
+        // 12:59:59
+        $statusBefore = $schedule->getStatus('Mon', SecondOfDay::fromInt(46799));
+        $this->assertSame(1, $statusBefore->secondsToResume);
+
+        // 13:00:00
+        $statusAt = $schedule->getStatus('Mon', SecondOfDay::fromInt(46800));
+
+        $this->assertSame(StatusType::OPEN, $statusAt->type);
+        $this->assertNull( $statusAt->secondsToResume);
+        $this->assertSame(18000, $statusAt->secondsToClose);
+    }
+
+    public function test_break_boundary_seconds(): void
+    {
+        $schedule = Factory::petShop();
+
+        // 11:59:59 → OPEN
+        $statusBefore = $schedule->getStatus('Mon', SecondOfDay::fromInt(43199));
+        $this->assertSame(1, $statusBefore->secondsToBreak);
+
+        // 12:00:00 → ON_BREAK
+        $statusAt = $schedule->getStatus('Mon', SecondOfDay::fromInt(43200));
+        $this->assertSame(3600, $statusAt->secondsToResume);
+    }
+
+    public function test_closed_seconds_to_open_precision(): void
+    {
+        $schedule = Factory::petShop();
+
+        // 07:59:30
+        $status = $schedule->getStatus('Mon', SecondOfDay::fromInt(28770));
+        $this->assertSame(30, $status->secondsToOpen);
+    }
+
 }
