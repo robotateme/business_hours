@@ -1,0 +1,17 @@
+parameters:
+    level: max
+    paths:
+        - src
+        - tests
+
+    treatPhpDocTypesAsCertain: true
+    checkMissingIterableValueType: true
+    checkGenericClassInNonGenericObjectType: true
+    checkUninitializedProperties: true
+    checkMissingCallableSignature: true
+
+    inferPrivatePropertyTypeFromConstructor: true
+
+    reportUnmatchedIgnoredErrors: true
+
+    ignoreErrors: []

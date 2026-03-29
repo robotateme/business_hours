@@ -198,4 +198,21 @@ final class ScheduleTest extends TestCase
         $this->assertEquals(StatusType::CLOSED, $status->type);
     }
 
+    public function test_prediction_with_seconds_precision(): void
+    {
+        $schedule = Factory::petShop();
+        $handler = new GetPointStatusHandler();
+
+        $status = $handler->handle(
+            new GetPointStatusQuery(
+                $schedule,
+                'Mon',
+                new DateTimeImmutable('11:59:30')
+            )
+        );
+
+        $this->assertEquals(StatusType::OPEN, $status->type);
+        $this->assertEquals(30, $status->secondsToBreak);
+    }
+
 }
