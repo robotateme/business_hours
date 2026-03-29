@@ -2,8 +2,8 @@
 
 namespace BusinessHours\Application\Query;
 
-use BusinessHours\Application\DTO\Status;
 use BusinessHours\Domain\ValueObject\SecondOfDay;
+use BusinessHours\Domain\ValueObject\Status;
 
 final class GetPointStatusHandler
 {

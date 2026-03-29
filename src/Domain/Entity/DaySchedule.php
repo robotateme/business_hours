@@ -2,9 +2,9 @@
 
 namespace BusinessHours\Domain\Entity;
 
-use BusinessHours\Application\DTO\Status;
 use BusinessHours\Domain\ValueObject\BreakPeriod;
 use BusinessHours\Domain\ValueObject\SecondOfDay;
+use BusinessHours\Domain\ValueObject\Status;
 use BusinessHours\Domain\ValueObject\TimeRange;
 
 final readonly class DaySchedule

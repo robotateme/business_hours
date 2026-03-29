@@ -2,8 +2,8 @@
 
 namespace BusinessHours\Domain\Entity;
 
-use BusinessHours\Application\DTO\Status;
 use BusinessHours\Domain\ValueObject\SecondOfDay;
+use BusinessHours\Domain\ValueObject\Status;
 
 final class Schedule
 {
@@ -18,7 +18,9 @@ final class Schedule
     public function getStatus(string $day, SecondOfDay $time): Status
     {
         if (!isset($this->days[$day])) {
-            return Status::closed(86400); // fallback
+            // бизнес-решение:
+            // нет расписания = всегда закрыто
+            return Status::closed(86400);
         }
 
         return $this->days[$day]->resolve($time);
